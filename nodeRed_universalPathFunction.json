@@ -1,0 +1,39 @@
+// Config: map each temperature SignalK path -> display metadata.
+// Add more entries here as you wire up more temperature displays.
+// note for font size below, for my current displays really 1-3 are the best/optimal settings
+const tempPaths = {
+    "environment.outside.temperature": {
+        title: "Outside Temperature",
+        mqttTopic: "boat/display/outside_temp",
+        fontColor: "white",
+        brightness: 300,
+        fontSize: 3 
+    },
+    "environment.water.temperature": {
+        title: "Water Temperature",
+        mqttTopic: "boat/display/water_temp",
+        fontColor: "cyan",
+        brightness: 255,
+        fontSize: 2
+    }
+};
+
+const cfg = tempPaths[msg.topic];
+if (!cfg) {
+    return null; // not a path we're displaying, drop the message
+}
+
+// SignalK temperature is always Kelvin -> convert to Fahrenheit
+const fahrenheit = (msg.payload - 273.15) * 9 / 5 + 32;
+
+msg.payload = JSON.stringify({
+    title: cfg.title,
+    value: fahrenheit.toFixed(1),
+    unit: "F",
+    font_color: cfg.fontColor,
+    brightness: cfg.brightness,
+    font_size: cfg.fontSize
+});
+msg.topic = cfg.mqttTopic; // overwrite SK path with your MQTT topic
+
+return msg;

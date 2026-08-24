@@ -1,0 +1,64 @@
+// easyMFD universal display function
+// Reads display configs saved by the easyMFD dashboard (global context,
+// key "easyMFD_displays") and, for every incoming (flattened) SignalK
+// delta, checks whether any configured display wants that path/source.
+// For each match, evaluates that display's "math" expression against
+// the raw value, formats it, and emits one MQTT-ready message per
+// matching display.
+//
+// Input: from signalk-on-delta (Flatten checked). msg.topic = SK path,
+// msg.payload = raw (SI) value, msg["$source"] = source identifier.
+//
+// Output: one msg per matching display config, msg.topic = that
+// display's MQTT topic, msg.payload = JSON string ready for mqtt-out.
+
+const STORE = "file";
+const KEY = "easyMFD_displays";
+
+const displays = global.get(KEY, STORE) || [];
+
+// Find every configured display that wants this path (and, if it
+// specified a source, matches that source too).
+const matches = displays.filter(d => {
+    if (d.path !== msg.topic) return false;
+    if (d.source && d.source !== msg["$source"]) return false;
+    return true;
+});
+
+if (matches.length === 0) {
+    return null; // nothing configured for this path -- drop it
+}
+
+const outputs = [];
+
+matches.forEach(d => {
+    let result;
+    try {
+        const mathExpr = (d.math && d.math.trim()) ? d.math : "x";
+        result = new Function("x", "return " + mathExpr)(msg.payload);
+    } catch (e) {
+        node.warn(`easyMFD: math expression failed for "${d.name}" (${d.topic}): ${e.message}`);
+        return; // skip this display, don't send bad data
+    }
+
+    if (typeof result !== "number" || Number.isNaN(result)) {
+        node.warn(`easyMFD: math expression for "${d.name}" (${d.topic}) did not return a number`);
+        return;
+    }
+
+    const decimals = (typeof d.decimals === "number") ? d.decimals : 1;
+
+    outputs.push({
+        topic: d.topic,
+        payload: JSON.stringify({
+            title: d.title,
+            value: result.toFixed(decimals),
+            unit: d.unit,
+            font_color: d.color,
+            brightness: d.brightness,
+            font_size: d.size
+        })
+    });
+});
+
+return [outputs];
