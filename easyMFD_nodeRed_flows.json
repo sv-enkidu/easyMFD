@@ -1,0 +1,361 @@
+[
+    {
+        "id": "easymfd_tab",
+        "type": "tab",
+        "label": "easyMFD",
+        "disabled": false,
+        "info": "easyMFD display manager -- add/edit/delete SignalK TFT display configs. See the ui-template node's Vue code and the config-store function node for logic."
+    },
+    {
+        "id": "easymfd_template",
+        "type": "ui-template",
+        "z": "easymfd_tab",
+        "group": "easymfd_group",
+        "page": "",
+        "ui": "",
+        "name": "easyMFD display manager 1.0 (display only)",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "format": "<template>\n  <div style=\"padding:8px;\">\n    <div style=\"margin-bottom:1.5rem;\">\n      <p style=\"font-size:13px;color:var(--text-secondary);margin:0 0 8px;\">Configured displays</p>\n      <div v-for=\"(d,i) in displays\" :key=\"d.topic\" style=\"display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:0.5px solid var(--border);border-radius:6px;margin-bottom:6px;\">\n        <div>\n          <span style=\"font-size:14px;font-weight:500;\">{{ d.name }}</span>\n          <span style=\"font-size:13px;color:var(--text-secondary);margin-left:10px;\">{{ d.path }} &rarr; {{ d.topic }}</span>\n        </div>\n        <div style=\"display:flex;gap:6px;\">\n          <button @click=\"editDisplay(i)\">Edit</button>\n          <button @click=\"deleteDisplay(i)\">Delete</button>\n        </div>\n      </div>\n      <p v-if=\"displays.length === 0\" style=\"font-size:13px;color:var(--text-muted);\">No displays configured yet.</p>\n    </div>\n\n    <div style=\"background:var(--surface-2);border-radius:12px;border:0.5px solid var(--border);padding:1rem 1.25rem;\">\n      <p style=\"font-weight:500;font-size:15px;margin:0 0 12px;\">{{ editingIndex === null ? 'Add display' : 'Edit display' }}</p>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Display Name</label>\n          <input type=\"text\" v-model=\"form.name\" placeholder=\"Helm - Outside temp\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">MQTT topic (destination display ID)</label>\n          <input type=\"text\" v-model=\"form.topic\" placeholder=\"boat/display/helm_1\" style=\"width:100%;\" :disabled=\"editingIndex !== null\" />\n        </div>\n      </div>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">SignalK path</label>\n          <input type=\"text\" v-model=\"form.path\" placeholder=\"environment.outside.temperature\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">SignalK source (optional)</label>\n          <input type=\"text\" v-model=\"form.source\" placeholder=\"Leave blank to match any source\" style=\"width:100%;\" />\n        </div>\n      </div>\n\n      <div style=\"border-top:0.5px solid var(--border);margin:4px 0 12px;\"></div>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Title Displayed</label>\n          <input type=\"text\" v-model=\"form.title\" placeholder=\"Outside temperature\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Unit Displayed</label>\n          <input type=\"text\" v-model=\"form.unit\" placeholder=\"F\" style=\"width:100%;\" />\n        </div>\n      </div>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Math expression (x = raw SignalK value)</label>\n          <input type=\"text\" v-model=\"form.math\" placeholder=\"(x - 273.15) * 9/5 + 32\" style=\"width:100%;font-family:monospace;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Decimal places</label>\n          <input type=\"number\" v-model.number=\"form.decimals\" min=\"0\" max=\"6\" style=\"width:100%;\" />\n        </div>\n      </div>\n\n      <div style=\"border-top:0.5px solid var(--border);margin:4px 0 12px;\"></div>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Font color</label>\n          <select v-model=\"form.color\" style=\"width:100%;\">\n            <option>white</option><option>yellow</option><option>cyan</option><option>red</option><option>green</option><option>orange</option><option>magenta</option><option>blue</option>\n          </select>\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Font size (1-6)</label>\n          <input type=\"number\" v-model.number=\"form.size\" min=\"1\" max=\"6\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Brightness ({{ form.brightness }})</label>\n          <input type=\"range\" v-model.number=\"form.brightness\" min=\"0\" max=\"255\" step=\"1\" style=\"width:100%;\" />\n        </div>\n      </div>\n\n      <div style=\"display:flex;gap:8px;margin-top:4px;\">\n        <button @click=\"saveDisplay\" style=\"background:var(--fill-primary);color:var(--on-primary);border:none;\">{{ editingIndex === null ? 'Save display' : 'Update display' }}</button>\n        <button @click=\"clearForm\">Clear form</button>\n      </div>\n      <p v-if=\"formError\" style=\"font-size:13px;color:var(--text-danger);margin:8px 0 0;\">{{ formError }}</p>\n    </div>\n  </div>\n</template>\n\n<script>\nexport default {\n  data() {\n    return {\n      displays: [],\n      editingIndex: null,\n      formError: '',\n      form: this.blankForm()\n    }\n  },\n  methods: {\n    blankForm() {\n      return { name:'', topic:'', path:'', source:'', title:'', unit:'', math:'x', decimals:1, color:'white', size:4, brightness:255 }\n    },\n    clearForm() {\n      this.form = this.blankForm()\n      this.editingIndex = null\n      this.formError = ''\n    },\n    editDisplay(i) {\n      this.form = Object.assign({}, this.displays[i])\n      this.editingIndex = i\n      this.formError = ''\n    },\n    deleteDisplay(i) {\n      const d = this.displays[i]\n      this.send({ topic: 'delete', payload: { topic: d.topic } })\n    },\n    saveDisplay() {\n      if (!this.form.name || !this.form.topic || !this.form.path || !this.form.title || !this.form.unit) {\n        this.formError = 'Fill in display name, MQTT topic, SignalK path, title, and unit first.'\n        return\n      }\n      this.formError = ''\n      if (!this.form.math) this.form.math = 'x'\n      this.send({ topic: 'save', payload: Object.assign({}, this.form) })\n      this.clearForm()\n    }\n  },\n  mounted() {\n    this.send({ topic: 'load', payload: {} })\n  },\n  watch: {\n    msg: function(newVal) {\n      if (!newVal) return\n      if (newVal.topic === 'list') {\n        this.displays = newVal.payload || []\n      }\n    }\n  }\n}\n</script>\n\n<style>\n  input[type=\"text\"],\n  input[type=\"number\"],\n  select {\n    background-color: #f2f2f2;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    padding: 6px 8px;\n    box-sizing: border-box;\n    color: #111;\n  }\n\n  input[type=\"range\"] {\n    accent-color: #0094CE;\n  }\n\n  input:focus,\n  select:focus {\n    outline: none;\n    border-color: #0094CE;\n    background-color: #ffffff;\n  }\n</style>",
+        "storeOutMessages": true,
+        "passthru": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 510,
+        "y": 120,
+        "wires": [
+            [
+                "easymfd_configstore"
+            ]
+        ]
+    },
+    {
+        "id": "easymfd_configstore",
+        "type": "function",
+        "z": "easymfd_tab",
+        "name": "easyMFD config store",
+        "func": "// easyMFD config store\n// Reads/writes the array of configured displays to persistent\n// (file-based) global context, keyed as \"easyMFD_displays\".\n//\n// IMPORTANT: this requires a \"file\" context store enabled in your\n// Node-RED settings.js, e.g.:\n//\n//   contextStorage: {\n//       default: \"memory\",\n//       file: { module: \"localfilesystem\" }\n//   }\n//\n// Without this, change STORE below to \"memory\" -- configs will work,\n// but will NOT survive a Node-RED restart.\n\nconst STORE = \"file\";\nconst KEY = \"easyMFD_displays\";\n\nlet displays = global.get(KEY, STORE) || [];\n\nif (msg.topic === \"save\") {\n    const incoming = msg.payload;\n    const idx = displays.findIndex(d => d.topic === incoming.topic);\n    if (idx >= 0) {\n        displays[idx] = incoming; // update existing (matched by MQTT topic)\n    } else {\n        displays.push(incoming); // new display\n    }\n    global.set(KEY, displays, STORE);\n} else if (msg.topic === \"delete\") {\n    displays = displays.filter(d => d.topic !== msg.payload.topic);\n    global.set(KEY, displays, STORE);\n}\n// \"load\" (or any other topic) falls through here and just returns\n// the current list -- used on dashboard page load.\n\nreturn { topic: \"list\", payload: displays };",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 180,
+        "wires": [
+            [
+                "easymfd_template"
+            ]
+        ]
+    },
+    {
+        "id": "b88d7092069419a6",
+        "type": "signalk-on-delta",
+        "z": "easymfd_tab",
+        "name": "Query Singnalk for Data",
+        "context": "vessels.self",
+        "flatten": true,
+        "x": 200,
+        "y": 280,
+        "wires": [
+            [
+                "5b3b3d1f1d837b6d"
+            ]
+        ]
+    },
+    {
+        "id": "eecd6f3874c435c6",
+        "type": "mqtt out",
+        "z": "easymfd_tab",
+        "name": "Send Display Data as MQTT message to ESP32/TFT",
+        "topic": "",
+        "qos": "2",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "91be88d755e48421",
+        "x": 1120,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "5b3b3d1f1d837b6d",
+        "type": "function",
+        "z": "easymfd_tab",
+        "name": "Universal Function to Control Display PIpeline SK to MQTT OUT",
+        "func": "// easyMFD universal display function\n// Reads display configs saved by the easyMFD dashboard (global context,\n// key \"easyMFD_displays\") and, for every incoming (flattened) SignalK\n// delta, checks whether any configured display wants that path/source.\n// For each match, evaluates that display's \"math\" expression against\n// the raw value, formats it, and emits one MQTT-ready message per\n// matching display.\n//\n// Input: from signalk-on-delta (Flatten checked). msg.topic = SK path,\n// msg.payload = raw (SI) value, msg[\"$source\"] = source identifier.\n//\n// Output: one msg per matching display config, msg.topic = that\n// display's MQTT topic, msg.payload = JSON string ready for mqtt-out.\n\nconst STORE = \"file\";\nconst KEY = \"easyMFD_displays\";\n\nconst displays = global.get(KEY, STORE) || [];\n\n// Find every configured display that wants this path (and, if it\n// specified a source, matches that source too).\nconst matches = displays.filter(d => {\n    if (d.path !== msg.topic) return false;\n    if (d.source && d.source !== msg[\"$source\"]) return false;\n    return true;\n});\n\nif (matches.length === 0) {\n    return null; // nothing configured for this path -- drop it\n}\n\nconst outputs = [];\n\nmatches.forEach(d => {\n    let result;\n    try {\n        const mathExpr = (d.math && d.math.trim()) ? d.math : \"x\";\n        result = new Function(\"x\", \"return \" + mathExpr)(msg.payload);\n    } catch (e) {\n        node.warn(`easyMFD: math expression failed for \"${d.name}\" (${d.topic}): ${e.message}`);\n        return; // skip this display, don't send bad data\n    }\n\n    if (typeof result !== \"number\" || Number.isNaN(result)) {\n        node.warn(`easyMFD: math expression for \"${d.name}\" (${d.topic}) did not return a number`);\n        return;\n    }\n\n    const decimals = (typeof d.decimals === \"number\") ? d.decimals : 1;\n\n    outputs.push({\n        topic: d.topic,\n        payload: JSON.stringify({\n            title: d.title,\n            value: result.toFixed(decimals),\n            unit: d.unit,\n            font_color: d.color,\n            brightness: d.brightness,\n            font_size: d.size\n        })\n    });\n});\n\nreturn [outputs];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 280,
+        "wires": [
+            [
+                "eecd6f3874c435c6"
+            ]
+        ]
+    },
+    {
+        "id": "e11c1c1acd4dd51f",
+        "type": "ui-template",
+        "z": "easymfd_tab",
+        "group": "easymfd_group",
+        "page": "",
+        "ui": "",
+        "name": "easyMFD Display Manager (alerting)",
+        "order": 2,
+        "width": "0",
+        "height": "0",
+        "format": "<template>\n  <div style=\"padding:8px;\">\n    <div style=\"margin-bottom:1.5rem;\">\n      <p style=\"font-size:13px;color:var(--text-secondary);margin:0 0 8px;\">Configured alerts</p>\n      <div v-for=\"(a,i) in alerts\" :key=\"a.name\" style=\"display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:0.5px solid var(--border);border-radius:6px;margin-bottom:6px;\">\n        <div>\n          <span style=\"font-size:14px;font-weight:500;\">{{ a.name }}</span>\n          <span style=\"font-size:13px;color:var(--text-secondary);margin-left:10px;\">{{ summarize(a) }}</span>\n        </div>\n        <div style=\"display:flex;gap:6px;\">\n          <button @click=\"editAlert(i)\">Edit</button>\n          <button @click=\"deleteAlert(i)\">Delete</button>\n        </div>\n      </div>\n      <p v-if=\"alerts.length === 0\" style=\"font-size:13px;color:var(--text-muted);\">No alert profiles configured yet.</p>\n    </div>\n\n    <div style=\"background:var(--surface-2);border-radius:12px;border:0.5px solid var(--border);padding:1rem 1.25rem;\">\n      <p style=\"font-weight:500;font-size:15px;margin:0 0 12px;\">{{ editingIndex === null ? 'Add alert profile' : 'Edit alert profile' }}</p>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Alert Profile Name</label>\n          <input type=\"text\" v-model=\"form.name\" placeholder=\"Critical Alert\" style=\"width:100%;\" :disabled=\"editingIndex !== null\" />\n        </div>\n      </div>\n\n      <div style=\"border-top:0.5px solid var(--border);margin:4px 0 12px;\"></div>\n\n      <p style=\"font-size:13px;color:var(--text-secondary);margin:0 0 8px;\">This is the sound only -- it says nothing about when or where it fires. Wire the trigger logic (thresholds, timers, whatever) and the destination display separately, upstream of the Alert Sender node.</p>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Loudness ({{ form.loudness }}%)</label>\n          <input type=\"range\" v-model.number=\"form.loudness\" min=\"0\" max=\"100\" step=\"1\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Frequency ({{ frequencyHz }} Hz)</label>\n          <input type=\"range\" v-model.number=\"form.freqSlider\" min=\"0\" max=\"1000\" step=\"1\" style=\"width:100%;\" />\n        </div>\n      </div>\n\n      <div style=\"border-top:0.5px solid var(--border);margin:4px 0 12px;\"></div>\n\n      <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px;\">\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Duration of Alert (sec)</label>\n          <input type=\"number\" v-model.number=\"form.duration_s\" min=\"0.1\" step=\"0.1\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Duration of Tone Segment (sec)</label>\n          <input type=\"number\" v-model.number=\"form.segment_s\" min=\"0.1\" step=\"0.1\" style=\"width:100%;\" />\n        </div>\n        <div>\n          <label style=\"font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;\">Duration of Segment Pause (sec)</label>\n          <input type=\"number\" v-model.number=\"form.pause_s\" min=\"0\" step=\"0.1\" style=\"width:100%;\" />\n        </div>\n      </div>\n      <p style=\"font-size:12px;color:var(--text-muted);margin:-6px 0 12px;\">Example: Duration of Alert 90s, Segment 5s, Pause 1s &rarr; sounds 5s, silent 1s, repeats until 90s total, then stops (even mid-segment).</p>\n\n      <div style=\"display:flex;gap:8px;margin-top:4px;\">\n        <button @click=\"saveAlert\" style=\"background:var(--fill-primary);color:var(--on-primary);border:none;\">{{ editingIndex === null ? 'Save alert' : 'Update alert' }}</button>\n        <button @click=\"clearForm\">Clear form</button>\n      </div>\n      <p v-if=\"formError\" style=\"font-size:13px;color:var(--text-danger);margin:8px 0 0;\">{{ formError }}</p>\n    </div>\n  </div>\n</template>\n\n<script>\nexport default {\n  data() {\n    return {\n      alerts: [],\n      editingIndex: null,\n      formError: '',\n      form: this.blankForm()\n    }\n  },\n  computed: {\n    // Live Hz readout for the log-scale frequency slider. The slider\n    // itself stores a raw 0-1000 position (form.freqSlider); this is\n    // purely for display -- the actual Hz value is computed at save\n    // time via sliderToHz().\n    frequencyHz() {\n      return this.sliderToHz(this.form.freqSlider)\n    }\n  },\n  methods: {\n    blankForm() {\n      return {\n        name: '',\n        loudness: 100,\n        freqSlider: this.hzToSlider(2000), // ~2000Hz default starting point\n        duration_s: 5,\n        segment_s: 5,\n        pause_s: 0\n      }\n    },\n    // Log-scale mapping: slider 0-1000 <-> 100-15,000 Hz. Most of the\n    // slider's travel covers the low end, where pitch differences are\n    // actually easy to hear; rounded to the nearest 10Hz for a clean\n    // display value.\n    sliderToHz(v) {\n      const hz = 100 * Math.pow(150, v / 1000)\n      return Math.round(hz / 10) * 10\n    },\n    hzToSlider(hz) {\n      const safeHz = Math.max(100, Math.min(15000, hz || 2000))\n      return Math.round(1000 * Math.log(safeHz / 100) / Math.log(150))\n    },\n    summarize(a) {\n      return `${a.loudness}% \\u2022 ${a.frequency_hz}Hz \\u2022 ${a.duration_s}s total (${a.segment_s}s on / ${a.pause_s}s off)`\n    },\n    clearForm() {\n      this.form = this.blankForm()\n      this.editingIndex = null\n      this.formError = ''\n    },\n    editAlert(i) {\n      const a = this.alerts[i]\n      this.form = Object.assign(this.blankForm(), {\n        name: a.name,\n        loudness: a.loudness,\n        freqSlider: this.hzToSlider(a.frequency_hz),\n        duration_s: a.duration_s,\n        segment_s: a.segment_s,\n        pause_s: a.pause_s\n      })\n      this.editingIndex = i\n      this.formError = ''\n    },\n    deleteAlert(i) {\n      const a = this.alerts[i]\n      this.send({ topic: 'delete', payload: { name: a.name } })\n    },\n    saveAlert() {\n      if (!this.form.name || !this.form.name.trim()) {\n        this.formError = 'Give this alert profile a name first.'\n        return\n      }\n      if (!this.form.duration_s || this.form.duration_s <= 0) {\n        this.formError = 'Duration of Alert must be greater than 0.'\n        return\n      }\n      if (!this.form.segment_s || this.form.segment_s <= 0) {\n        this.formError = 'Duration of Tone Segment must be greater than 0.'\n        return\n      }\n      this.formError = ''\n\n      const payload = {\n        name: this.form.name.trim(),\n        loudness: this.form.loudness,\n        frequency_hz: this.sliderToHz(this.form.freqSlider),\n        duration_s: this.form.duration_s,\n        segment_s: this.form.segment_s,\n        pause_s: this.form.pause_s\n      }\n\n      this.send({ topic: 'save', payload })\n      this.clearForm()\n    }\n  },\n  mounted() {\n    this.send({ topic: 'load', payload: {} })\n  },\n  watch: {\n    msg: function(newVal) {\n      if (!newVal) return\n      if (newVal.topic === 'list') {\n        this.alerts = newVal.payload || []\n      }\n    }\n  }\n}\n</script>\n\n<style>\n  input[type=\"text\"],\n  input[type=\"number\"],\n  select {\n    background-color: #f2f2f2;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    padding: 6px 8px;\n    box-sizing: border-box;\n    color: #111;\n  }\n\n  input[type=\"range\"] {\n    accent-color: #0094CE;\n  }\n\n  input:focus,\n  select:focus {\n    outline: none;\n    border-color: #0094CE;\n    background-color: #ffffff;\n  }\n</style>\n",
+        "storeOutMessages": true,
+        "passthru": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 430,
+        "y": 420,
+        "wires": [
+            [
+                "988e8d57153a2659"
+            ]
+        ]
+    },
+    {
+        "id": "988e8d57153a2659",
+        "type": "function",
+        "z": "easymfd_tab",
+        "name": "easyMFD ALERTING config store",
+        "func": "// easyMFD alert config store\n// Reads/writes the array of configured Alert Profiles to persistent\n// (file-based) global context, keyed as \"easyMFD_alerts\".\n//\n// Mirrors nodeRed_display_config_store_node.json exactly, with one\n// deliberate difference: display configs dedupe on d.topic (the MQTT\n// destination), because a display *is* a topic. Alert profiles are\n// intentionally topic-independent -- the same profile can be sent to\n// any display -- so they dedupe on a.name (the profile's own unique\n// identifier) instead.\n//\n// Requires the same \"file\" context store enabled in settings.js that\n// the display config store already relies on:\n//\n//   contextStorage: {\n//       default: \"memory\",\n//       file: { module: \"localfilesystem\" }\n//   }\n\nconst STORE = \"file\";\nconst KEY = \"easyMFD_alerts\";\n\nlet alerts = global.get(KEY, STORE) || [];\n\nif (msg.topic === \"save\") {\n    const incoming = msg.payload;\n\n    if (!incoming || !incoming.name || !incoming.name.trim()) {\n        node.warn(\"easyMFD: alert profile save rejected -- name is required\");\n        return { topic: \"list\", payload: alerts };\n    }\n\n    const idx = alerts.findIndex(a => a.name === incoming.name);\n    if (idx >= 0) {\n        alerts[idx] = incoming; // update existing (matched by profile name)\n    } else {\n        alerts.push(incoming); // new profile\n    }\n    global.set(KEY, alerts, STORE);\n} else if (msg.topic === \"delete\") {\n    alerts = alerts.filter(a => a.name !== msg.payload.name);\n    global.set(KEY, alerts, STORE);\n}\n// \"load\" (or any other topic) falls through here and just returns\n// the current list -- used on dashboard page load.\n\nreturn { topic: \"list\", payload: alerts };\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 500,
+        "wires": [
+            [
+                "e11c1c1acd4dd51f"
+            ]
+        ]
+    },
+    {
+        "id": "c2f001bd76af37af",
+        "type": "function",
+        "z": "easymfd_tab",
+        "name": "easyMFD Alert Sender Function",
+        "func": "// easyMFD Alert Sender\n// -----------------------------------------------------------------\n// This is the ONE shared node that every custom alert-trigger flow\n// wires into. Your own logic (heel angle threshold, pressure+temp\n// compound condition, anchor watch, whatever) lives entirely upstream\n// of this node, built with ordinary Node-RED nodes -- this node's\n// only job is: given a destination + a profile name, look up that\n// profile and emit the buzzer JSON.\n//\n// Input:\n//   msg.topic   = destination display's MQTT topic, e.g. \"nav_table\"\n//                 (the same topic string used for that display's\n//                 regular data topic -- NOT already suffixed with\n//                 \"/buzzer\", this function adds that).\n//   msg.payload = the Alert Profile name to fire, e.g. \"Critical Alert\"\n//                 (must match a profile saved via the Alert Manager UI).\n//\n// Output:\n//   msg.topic   = \"<destination>/buzzer\"\n//   msg.payload = JSON string, ready for an MQTT-out node, e.g.:\n//                 { \"loudness\": 100, \"frequency_hz\": 3000,\n//                   \"duration_ms\": 90000, \"segment_ms\": 5000,\n//                   \"pause_ms\": 1000 }\n//\n// Note the unit conversion: profiles are stored/edited in seconds\n// (human-friendly, matches the UI), but the wire format to the ESP32\n// uses milliseconds for firmware timing precision -- same \"SI/wire\n// units differ from human-facing UI units\" pattern already used\n// elsewhere in easyMFD (e.g. SignalK Kelvin -> displayed Fahrenheit).\n\nconst STORE = \"file\";\nconst KEY = \"easyMFD_alerts\";\n\nconst alerts = global.get(KEY, STORE) || [];\nconst destinationTopic = msg.topic;\nconst profileName = msg.payload;\n\nif (!destinationTopic || typeof destinationTopic !== \"string\") {\n    node.warn(\"easyMFD: Alert Sender got no destination topic on msg.topic -- alert dropped\");\n    return null;\n}\n\nconst profile = alerts.find(a => a.name === profileName);\n\nif (!profile) {\n    node.warn(`easyMFD: no alert profile named \"${profileName}\" found -- alert dropped`);\n    return null;\n}\n\nmsg.topic = `${destinationTopic}/buzzer`;\nmsg.payload = JSON.stringify({\n    loudness: profile.loudness,\n    frequency_hz: profile.frequency_hz,\n    duration_ms: Math.round(profile.duration_s * 1000),\n    segment_ms: Math.round(profile.segment_s * 1000),\n    pause_ms: Math.round(profile.pause_s * 1000)\n});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 600,
+        "wires": [
+            [
+                "e36abe763290f607"
+            ]
+        ]
+    },
+    {
+        "id": "e36abe763290f607",
+        "type": "mqtt out",
+        "z": "easymfd_tab",
+        "name": "send ALERT tone as MQTT message to ESP32",
+        "topic": "",
+        "qos": "2",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "91be88d755e48421",
+        "x": 1080,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "581624dd076c599c",
+        "type": "signalk-on-delta",
+        "z": "easymfd_tab",
+        "name": "Query Singnalk for Data",
+        "context": "vessels.self",
+        "flatten": true,
+        "x": 220,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "515951fc7b34743c",
+        "type": "inject",
+        "z": "easymfd_tab",
+        "name": "INSERT LOGIC for Alert Trigger",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "new_pcb",
+        "payload": "alert_test_2",
+        "payloadType": "str",
+        "x": 330,
+        "y": 680,
+        "wires": [
+            [
+                "c2f001bd76af37af"
+            ]
+        ]
+    },
+    {
+        "id": "easymfd_group",
+        "type": "ui-group",
+        "name": "Display manager",
+        "page": "easymfd_page",
+        "width": "12",
+        "height": "1",
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "91be88d755e48421",
+        "type": "mqtt-broker",
+        "name": "localhost:1883",
+        "broker": "localhost",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "easymfd_page",
+        "type": "ui-page",
+        "name": "easyMFD",
+        "ui": "4d03fbf833055398",
+        "path": "/easymfd",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "easymfd_theme",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 2,
+        "className": "",
+        "visible": false,
+        "disabled": false
+    },
+    {
+        "id": "4d03fbf833055398",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "easymfd_theme",
+        "type": "ui-theme",
+        "name": "easyMFD Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "8eb6d283074c71b2",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "@flowfuse/node-red-dashboard": "1.30.2",
+            "@signalk/node-red-embedded": "2.21.0"
+        }
+    }
+]
