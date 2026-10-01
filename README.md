@@ -37,7 +37,7 @@ nothing about how an alert sounds depends on what is currently on screen.
 
 # What is in the repo:
 - ESP32 firmware 
-- Node Red GUI and function nodes
+- Node Red GUI and function nodes (in json, use IMPORT to paste into Node Red)
 
 # Architecture overview
 One SignalK on-delta node feeds both pipelines. The display side matches the incoming path against saved display 
