@@ -18,10 +18,10 @@ The package was written to automate the Signalk path data selection and data for
 triggering or data-processing logic.  Since each boat will have different display requirements, different size 
 and numbers of displays, and different needs (when, where, and under what conditions to send display data and 
 alerts), the package allows users to easily add/integrate their own Node Red logic into these flows, essentially 
-enabling limitless flexibility and control over how data is managed and displayed such ESP32 controlled TFT displays. 
+enabling limitless flexibility and control over how data is managed and displayed using ESP32 controlled TFT displays. 
 
-The package includes ESP32 firmeare (for seperate ESP32/TFT pairs, that is, I have not yet released a version for 
-off-the-shelf integated ESP32/TFT displays, like the WaveShare displays, but that is coming soon).  FlowFuse 
+The package includes ESP32 firmeare and the essential Node Red nodes in flow format.  Note this release is only for seperate ESP32/TFT pairs, that is, I have not yet released a version for 
+off-the-shelf integated ESP32/TFT displays, like the WaveShare displays, but that is coming soon.  FlowFuse 
 dashboard nodes are included for the the Node Red control GUI, and two Node-RED "universal" functions, which allows 
 the user to create bespoke logic in Node Red to trigger when and where the display and alerts are sent.  When data 
 changes in Signalk, or when a users logic dictates change to the display data and its look/feel (how it is formatted
