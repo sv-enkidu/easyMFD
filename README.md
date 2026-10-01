@@ -41,6 +41,9 @@ nothing about how an alert sounds depends on what is currently on screen.
 - ESP32 firmware 
 - Node Red GUI and function nodes (in json, use IMPORT to paste into Node Red)
 
+<img width="1386" height="810" alt="easyMFD Node Red Flows" src="https://github.com/user-attachments/assets/2d6ab577-fa19-4c47-ab51-324a15eba9c5" />
+
+
 # Architecture overview
 One SignalK on-delta node feeds both pipelines. The display side matches the incoming path against saved display 
 configs and formats a value; the alert side only acts when the user's own trigger logic decides to. Both pipelines 
