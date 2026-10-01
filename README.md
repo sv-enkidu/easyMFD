@@ -7,6 +7,8 @@ independent layer adds user-'shape-able' piezo-buzzer alerts with user-definable
 (users can setup and save alert tones specific to function by setting their volume, frequency, and overall tone 
 characteristics, ie. duration, repeat pattern, etc). 
 
+Note: Current version is text only (displays only show text).  Future version will include graphical widgets.
+
 <img width="1313" height="881" alt="easyMFD GUI View" src="https://github.com/user-attachments/assets/471bd506-f4d7-4c7a-afbc-5f25ca830883" />
 
 
