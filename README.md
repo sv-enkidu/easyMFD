@@ -39,6 +39,37 @@ By design, display logic and alert logic are two fully independent systems that 
 hardware (ESP32 + TFT + cheap 3-5v piezo buzzer). Nothing about how a display renders depends on alerting, and 
 nothing about how an alert sounds depends on what is currently on screen.
 
+# What can you do with easyMFD
+
+A few simple examples include the following:
+
+1. a display at the helm can be set to show the current time on the hour, every hour, with font 
+ brightness adjusted automatically per time of day, and sound a simple, low-volume 
+ alert -  à la a 'ships bell' - except when watches change, at which point (or X minutes
+ before a watch change), the time display can be made to change color (a signal for 
+ pending watch change, for example) and a louder, repeating buzzer tone can be sounded 
+ at, say, 2000hz tone for X seconds (or whatever you specify in the GUI for that Alert Profile).
+The watch change alert can be sent only to the berth of the incoming helmsperson, or to any
+location where a display is mounted.   Similarly, reminder or wake up tones with a intensity
+matched to the severity of alert event, can be easily created and re-used in the GUI. 
+  
+ 3. A display can be set to show current autopilot maintainted COG, with the display autmatically 
+ changing its content for a user definted period to temporarily show windspeed if it suddenly increases
+ beyond a specific user-defined threshold, while a specific 'warning' alert tone, ie., a
+ 6000hz, full volume, oscillating on/off tone alert can be audibly sent to a display which 
+ can show current wind speed in a large, red 'alert like' font, versus whatever is currently 
+ displayed. Literally any boat-related event configurable in Node Red can be matched to a
+ display-specific output and 'alert' tone of the user's choosing, with all 'Alert.." and 
+ "Display Profiles" saved in non-volatile Node-RED memory for future use.
+
+All display profiles are saved for quick re-use, and can be sent to any display mounted on the boat, or 
+to multiple displays simultaneously, or multiple SignalK path data valuies can be sent to the same
+display in series sequentially.  Any of display or alert profile is automatically
+saved unless edited or deleted, by the user, and the look/feel of these profiles can vary with
+severity or importance data (big, red, fully bright fonts = bad news, dimmer, smaller fonts and 
+softer color profiles = ruitine or good news).  
+
+
 # What is in the repo:
 - ESP32 firmware 
 - Node Red GUI and function nodes (in json, use IMPORT to paste into Node Red)
@@ -225,8 +256,6 @@ trigger logic" above).
 
 
 # More on easyMFD audible alerts:
-
-(INSERT PIC OF NODE RED FLOWS WITH NODE CONFIGS IN GITHUB)
 
 Alerting is idependent of display settings by design, since alerts may be sent for any 
 reason, and may not be tied to whatever is displayed at the time (for example, a simple tone 
