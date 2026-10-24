@@ -11,6 +11,10 @@ Note: Current version is text only (displays only show text).  Future version wi
 
 <img width="1313" height="881" alt="easyMFD GUI View" src="https://github.com/user-attachments/assets/471bd506-f4d7-4c7a-afbc-5f25ca830883" />
 
+# Display Examples - Top two displays are typical 3.5" tft with external ESP32, bottom display is Hoysond integrated ESP32/tft (a classic
+'CYD', or 'cheap yellow display')
+
+<img width="400" height="800" alt="easyMFD Node Red Flows" src="https://github.com/sv-enkidu/easyMFD/blob/main/IMG_5906.jpeg" />
 
 ## What easyMFD does
 The package was written to automate the Signalk path data selection and data formatting, and all related I/O 
